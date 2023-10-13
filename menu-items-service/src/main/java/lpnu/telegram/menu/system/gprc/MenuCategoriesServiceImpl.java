@@ -41,14 +41,14 @@ public class MenuCategoriesServiceImpl extends MenuCategoriesServiceGrpc.MenuCat
         log.info("Received request to update new category {}", request);
         menuDAO.updateMenuCategory(request)
                 .subscribe(
-                        count -> {
-                            log.info("{} categories were updated", count);
-                            responseObserver.onNext(Empty.newBuilder().build());
-                            responseObserver.onCompleted();
-                        },
+                        count -> log.info("{} categories were updated", count),
                         error -> {
                             log.error("Error occurred on change of category", error);
                             responseObserver.onError(error);
+                        },
+                        () -> {
+                            responseObserver.onNext(Empty.newBuilder().build());
+                            responseObserver.onCompleted();
                         });
     }
 
@@ -65,13 +65,15 @@ public class MenuCategoriesServiceImpl extends MenuCategoriesServiceGrpc.MenuCat
                                             dishesDAO.removeDishesByCategoryIn(categoryIds))
                                     .then());
                 })
-                .subscribe(v -> {
-                    log.info("Removal of category {} completed successfully", request.getCategoryId());
-                    responseObserver.onNext(Empty.newBuilder().build());
-                    responseObserver.onCompleted();
-                }, error -> {
-                    log.error("Error occurred on removal of category", error);
-                    responseObserver.onError(error);
-                });
+                .subscribe(
+                        v -> log.info("Removal of category {} completed successfully", request.getCategoryId()),
+                        error -> {
+                            log.error("Error occurred on removal of category", error);
+                            responseObserver.onError(error);
+                        },
+                        () -> {
+                            responseObserver.onNext(Empty.newBuilder().build());
+                            responseObserver.onCompleted();
+                        });
     }
 }

@@ -11,7 +11,7 @@ import lpnu.telegram.menu.system.gprc.MenuCategoriesServiceImpl;
 
 import java.io.IOException;
 
-public class MenuItemsServiceMain {
+public class MenuManagementServer {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         var mongoClient = MongoClients.create(getMongoConnectionURL());
