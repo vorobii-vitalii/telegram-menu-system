@@ -28,7 +28,8 @@ public class MongoDishesDAOImpl implements DishesDAO {
 
     @Override
     public Flux<Dish> getDishesByCategoryId(String categoryId) {
-        return null;
+        return Flux.from(dishesCollection.find(Filters.eq(CATEGORY_ID, categoryId)))
+                .map(this::deserializeDish);
     }
 
     @Override

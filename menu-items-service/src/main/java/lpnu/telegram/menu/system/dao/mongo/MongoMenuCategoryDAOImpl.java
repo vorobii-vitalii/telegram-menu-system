@@ -7,8 +7,10 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lpnu.telegram.menu.system.AddCategoryRequest;
+import lpnu.telegram.menu.system.Category;
 import lpnu.telegram.menu.system.ChangeCategoryDetailsRequest;
 import lpnu.telegram.menu.system.dao.MenuCategoryDAO;
+import lpnu.telegram.menu.system.dto.FullCategoryDetail;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -26,6 +28,19 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
     private static final String NAME = "name";
 
     private final MongoCollection<Document> menuCategoryCollection;
+
+    @Override
+    public Mono<FullCategoryDetail> getCategoryDetails(String categoryId) {
+        return Mono.from(menuCategoryCollection.find(Filters.eq(CATEGORY_ID, categoryId)))
+                .map(this::deserializeCategoryDetails);
+    }
+
+    @Override
+    public Flux<Category> getChildMenuCategories(String parentCategoryId) {
+        return Flux.from(menuCategoryCollection.find(Filters.eq(PARENT_CATEGORY_ID, parentCategoryId))
+                        .projection(Projections.include(CATEGORY_ID, NAME)))
+                .map(this::deserializeCategory);
+    }
 
     @Override
     public Flux<String> searchForChildrenCategoriesRecursive(String rootMenuId) {
@@ -80,6 +95,22 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
                     return insertOneResult;
                 })
                 .then();
+    }
+
+    private FullCategoryDetail deserializeCategoryDetails(Document document) {
+        return FullCategoryDetail.builder()
+                .categoryId(document.getObjectId(CATEGORY_ID).toString())
+                .parentCategoryId(document.getString(PARENT_CATEGORY_ID))
+                .name(document.getString(NAME))
+                .build();
+    }
+
+
+    private Category deserializeCategory(Document document) {
+        return Category.newBuilder()
+                .setCategoryId(document.getObjectId(CATEGORY_ID).toString())
+                .setName(document.getString(NAME))
+                .build();
     }
 
     private Document serializeCategory(AddCategoryRequest request) {
