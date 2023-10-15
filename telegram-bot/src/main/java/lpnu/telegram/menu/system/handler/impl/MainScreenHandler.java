@@ -25,7 +25,7 @@ public class MainScreenHandler implements UpdateHandler {
         absSender.execute(EditMessageText.builder()
                 .chatId(message.getChatId())
                 .messageId(message.getMessageId())
-                .text("Привіт " + from.getFirstName() + " " + from.getLastName())
+                .text("Привіт " + from.getFirstName() + " " + (from.getLastName() == null ? "" : from.getLastName()))
                 .replyMarkup(InlineKeyboardMarkup.builder()
                         .keyboardRow(
                                 List.of(

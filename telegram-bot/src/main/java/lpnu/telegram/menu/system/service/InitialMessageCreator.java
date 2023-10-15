@@ -11,10 +11,10 @@ import java.util.List;
 
 public class InitialMessageCreator {
 
-    public SendMessage createInitialMessage(long chatId, User user) {
+    public SendMessage createInitialMessage(long chatId, User from) {
         return SendMessage.builder()
                 .chatId(chatId)
-                .text("Welcome " + user.getUserName())
+                .text("Привіт " + from.getFirstName() + " " + (from.getLastName() == null ? "" : from.getLastName()))
                 .replyMarkup(InlineKeyboardMarkup.builder()
                         .keyboardRow(
                                 List.of(
