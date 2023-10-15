@@ -8,9 +8,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.Set;
 
 public interface MenuCategoryDAO {
+    Flux<Category> getAllCategories();
     Mono<FullCategoryDetail> getCategoryDetails(String categoryId);
     Flux<Category> getChildMenuCategories(String parentCategoryId);
     Flux<String> searchForChildrenCategoriesRecursive(String rootCategoryId);

@@ -33,7 +33,6 @@ message AddDishRequest {
   string title = 3;
   string description = 4;
   bool availability = 5;
-  // TODO: Add support for images
   string imageBase64 = 6;
 }
 
@@ -43,7 +42,6 @@ message UpdateDishDetailsRequest {
   string title = 3;
   string description = 4;
   bool availability = 5;
-  // TODO: Add support for images
   string imageBase64 = 6;
 }
 

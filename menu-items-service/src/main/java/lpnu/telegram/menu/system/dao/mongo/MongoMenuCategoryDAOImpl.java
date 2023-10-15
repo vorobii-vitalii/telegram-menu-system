@@ -13,7 +13,6 @@ import lpnu.telegram.menu.system.dao.MenuCategoryDAO;
 import lpnu.telegram.menu.system.dto.FullCategoryDetail;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +29,12 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
     private final MongoCollection<Document> menuCategoryCollection;
 
     @Override
+    public Flux<Category> getAllCategories() {
+        return Flux.from(menuCategoryCollection.find().projection(Projections.include(CATEGORY_ID, NAME)))
+                .map(this::deserializeCategory);
+    }
+
+    @Override
     public Mono<FullCategoryDetail> getCategoryDetails(String categoryId) {
         return Mono.from(menuCategoryCollection.find(Filters.eq(CATEGORY_ID, categoryId)))
                 .map(this::deserializeCategoryDetails);
@@ -44,7 +49,9 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
 
     @Override
     public Flux<String> searchForChildrenCategoriesRecursive(String rootMenuId) {
-        return searchForChildrenCategoriesRecursive(List.of(rootMenuId));
+        return Flux.concat(
+                Flux.just(rootMenuId),
+                searchForChildrenCategoriesRecursive(List.of(rootMenuId)));
     }
 
     @Override
@@ -62,8 +69,7 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
         }
         return Flux.from(menuCategoryCollection.find(Filters.in(PARENT_CATEGORY_ID, parentCategoryIds))
                         .projection(Projections.include(CATEGORY_ID)))
-                .map(e -> e.getObjectId(CATEGORY_ID))
-                .map(ObjectId::toString)
+                .map(e -> e.getString(CATEGORY_ID))
                 .buffer()
                 .flatMap(categoryIds -> Flux.concat(
                         Flux.fromIterable(categoryIds),
@@ -99,7 +105,7 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
 
     private FullCategoryDetail deserializeCategoryDetails(Document document) {
         return FullCategoryDetail.builder()
-                .categoryId(document.getObjectId(CATEGORY_ID).toString())
+                .categoryId(document.getString(CATEGORY_ID))
                 .parentCategoryId(document.getString(PARENT_CATEGORY_ID))
                 .name(document.getString(NAME))
                 .build();
@@ -108,7 +114,7 @@ public class MongoMenuCategoryDAOImpl implements MenuCategoryDAO {
 
     private Category deserializeCategory(Document document) {
         return Category.newBuilder()
-                .setCategoryId(document.getObjectId(CATEGORY_ID).toString())
+                .setCategoryId(document.getString(CATEGORY_ID))
                 .setName(document.getString(NAME))
                 .build();
     }

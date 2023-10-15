@@ -8,7 +8,11 @@ import lpnu.telegram.menu.system.CategoryDetailsServiceGrpc;
 import lpnu.telegram.menu.system.FetchCategoryDetailsRequest;
 import lpnu.telegram.menu.system.dao.DishesDAO;
 import lpnu.telegram.menu.system.dao.MenuCategoryDAO;
+import lpnu.telegram.menu.system.dto.FullCategoryDetail;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -24,20 +28,28 @@ public class CategoryDetailsServiceImpl extends CategoryDetailsServiceGrpc.Categ
         var categoryId = request.getCategoryId();
         log.info("Received request to fetch menu categories details {}", categoryId);
         Flux.zip(
-                        dishesDAO.getDishesByCategoryId(categoryId).buffer(),
-                        menuCategoryDAO.getChildMenuCategories(categoryId).buffer(),
+                        dishesDAO.getDishesByCategoryId(categoryId).buffer().switchIfEmpty(Mono.just(List.of())),
+                        menuCategoryDAO.getChildMenuCategories(categoryId).buffer().switchIfEmpty(Mono.just(List.of())),
                         menuCategoryDAO.getCategoryDetails(categoryId)
+                                .switchIfEmpty(Mono.just(FullCategoryDetail.builder().build()))
                 ).map(tuple -> {
                     var dishes = tuple.getT1();
                     var childCategories = tuple.getT2();
                     var categoryDetails = tuple.getT3();
-                    return CategoryDetails.newBuilder()
+                    log.info("Dishes = {}, children = {}, categoryDetails = {}", dishes, childCategories, categoryDetails);
+                    var builder = CategoryDetails.newBuilder()
                             .addAllChildCategory(childCategories)
-                            .addAllDish(dishes)
-                            .setCategoryId(categoryDetails.categoryId())
-                            .setParentCategoryId(categoryDetails.parentCategoryId())
-                            .setName(categoryDetails.name())
-                            .build();
+                            .addAllDish(dishes);
+                    if (categoryDetails.categoryId() != null) {
+                        builder.setCategoryId(categoryDetails.categoryId());
+                    }
+                    if (categoryDetails.parentCategoryId() != null) {
+                        builder.setParentCategoryId(categoryDetails.parentCategoryId());
+                    }
+                    if (categoryDetails.name() != null) {
+                        builder.setName(categoryDetails.name());
+                    }
+                    return builder.build();
                 })
                 .subscribe(categoryDetails -> {
                             responseObserver.onNext(categoryDetails);

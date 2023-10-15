@@ -5,6 +5,7 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lpnu.telegram.menu.system.AddDishRequest;
 import lpnu.telegram.menu.system.Dish;
 import lpnu.telegram.menu.system.UpdateDishDetailsRequest;
 import lpnu.telegram.menu.system.dao.DishesDAO;
@@ -25,6 +26,12 @@ public class MongoDishesDAOImpl implements DishesDAO {
     private static final String AVAILABILITY = "availability";
 
     private final MongoCollection<Document> dishesCollection;
+
+    @Override
+    public Mono<Dish> getDishById(String dishId) {
+        return Mono.from(dishesCollection.find(Filters.eq(DISH_ID, dishId)))
+                .map(this::deserializeDish);
+    }
 
     @Override
     public Flux<Dish> getDishesByCategoryId(String categoryId) {
@@ -51,10 +58,10 @@ public class MongoDishesDAOImpl implements DishesDAO {
     }
 
     @Override
-    public Mono<Void> addNewDish(Dish dish) {
-        return Mono.from(dishesCollection.insertOne(serializeDish(dish)))
+    public Mono<Void> addNewDish(AddDishRequest addDishRequest) {
+        return Mono.from(dishesCollection.insertOne(serializeDishRequest(addDishRequest)))
                 .map(insertOneResult -> {
-                    log.info("Insertion result of dish {} = {}", dish, insertOneResult);
+                    log.info("Insertion result of dish {} = {}", addDishRequest, insertOneResult);
                     return insertOneResult;
                 })
                 .then();
@@ -82,12 +89,21 @@ public class MongoDishesDAOImpl implements DishesDAO {
 
     private Dish deserializeDish(Document document) {
         return Dish.newBuilder()
-                .setDishId(document.getObjectId(DISH_ID).toString())
+                .setDishId(document.getString(DISH_ID))
                 .setCategoryId(document.getString(CATEGORY_ID))
                 .setTitle(document.getString(TITLE))
                 .setDescription(document.getString(DESCRIPTION))
                 .setAvailability(document.getBoolean(AVAILABILITY))
                 .build();
+    }
+
+    private Document serializeDishRequest(AddDishRequest dish) {
+        return new Document()
+                .append(DISH_ID, dish.getDishId())
+                .append(CATEGORY_ID, dish.getCategoryId())
+                .append(TITLE, dish.getTitle())
+                .append(DESCRIPTION, dish.getDescription())
+                .append(AVAILABILITY, dish.getAvailability());
     }
 
     private Document serializeDish(Dish dish) {

@@ -1,0 +1,65 @@
+version: '3.7'
+services:
+
+  envoy:
+    image: envoyproxy/envoy:dev-6ef1bb476da8d050347b462b2d8efa1cddeb420f
+    networks:
+      net:
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+
+  mongo:
+    image: mongo:latest
+    networks:
+      net:
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: username
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  mongo-management:
+    image: mongo-express:latest
+    networks:
+      net:
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: username
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+
+  menu-management-service:
+    image: telegram-menu-system/menu-management-service:1.0-SNAPSHOT
+    ports:
+      - "8000:8000"
+      - "8006:8005"
+      - "9011:9010"
+    depends_on:
+      - mongo
+    networks:
+      - net
+    environment:
+      - "MONGO_URL=mongodb://username:password@mongo:27017"
+      - "PORT=8000"
+      - "MONGO_DB_NAME=test"
+      - "DISHES_COLLECTION_NAME=dishes"
+      - "MENU_CATEGORIES_COLLECTION_NAME=categories"
+
+  telegram-bot:
+    image: telegram-menu-system/telegram-bot:1.0-SNAPSHOT
+    depends_on:
+      - menu-management-service
+    networks:
+      - net
+    environment:
+      - "MANAGEMENT_SERVICE_HOST=menu-management-service"
+      - "MANAGEMENT_SERVICE_PORT=8000"
+      - "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}"
+
+networks:
+  net:
