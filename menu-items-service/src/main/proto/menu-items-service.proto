@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+option java_package = "lpnu.telegram.menu.system";
+option java_multiple_files = true;
+option java_outer_classname = "MenuService";
+
+package telegramMenuSystem;
+
+message AddCategoryRequest {
+  string categoryId = 1;
+  string parentCategoryId = 2;
+  string name = 3;
+}
+
+message ChangeCategoryDetailsRequest {
+  string categoryId = 1;
+  string parentCategoryId = 2;
+  string name = 3;
+}
+
+message RemoveCategoryRequest {
+  string categoryId = 1;
+}
+
+message FetchCategoryDetailsRequest {
+  // If not provided root category details returned
+  string categoryId = 1;
+}
+
+message AddDishRequest {
+  string dishId = 1;
+  string categoryId = 2;
+  string title = 3;
+  string description = 4;
+  bool availability = 5;
+  // TODO: Add support for images
+  string imageBase64 = 6;
+}
+
+message UpdateDishDetailsRequest {
+  string dishId = 1;
+  string categoryId = 2;
+  string title = 3;
+  string description = 4;
+  bool availability = 5;
+  // TODO: Add support for images
+  string imageBase64 = 6;
+}
+
+message RemoveDishRequest {
+  string dishId = 1;
+}
+
+message Dish {
+  string dishId = 1;
+  string categoryId = 2;
+  string title = 3;
+  string description = 4;
+  bool availability = 5;
+  string imageURI = 6;
+}
+
+message GetDishRequest {
+  string  dishId = 1;
+}
+
+message CategoryDetails {
+  string categoryId = 1;
+  string parentCategoryId = 2;
+  string name = 3;
+  repeated Category childCategory = 4;
+  repeated Dish dish = 5;
+}
+
+message Category {
+  string categoryId = 1;
+  string name = 2;
+}
+
+message Categories {
+  repeated Category category = 1;
+}
+
+message Empty {}
+
+service CategoryDetailsService {
+  rpc fetchMenuCategoryDetails(FetchCategoryDetailsRequest) returns (CategoryDetails) {}
+}
+
+service MenuCategoriesService {
+  rpc getAllCategories(Empty) returns (Categories) {}
+  rpc addCategory(AddCategoryRequest) returns (Empty) {}
+  rpc changeCategoryDetails(ChangeCategoryDetailsRequest) returns (Empty) {}
+  rpc removeCategory(RemoveCategoryRequest) returns (Empty) {}
+}
+
+service DishService {
+  rpc getDishById(GetDishRequest) returns (Dish) {}
+  rpc addDish(AddDishRequest) returns (Empty) {}
+  rpc updateDishDetails(UpdateDishDetailsRequest) returns (Empty) {}
+  rpc removeDish(RemoveDishRequest) returns (Empty) {}
+}
