@@ -1,0 +1,23 @@
+@startuml
+
+entity Dish {
+    * _id : UUID <<Dish ID>>
+    --
+    * title : string <<Title of dish>>
+    * description : string <<Description of dish>>
+    * categoryId : UUID <<Category to which dish belongs>>
+    * availability : boolean <<Availability of the dish>>
+}
+
+entity MenuCategory {
+    * _id : UUID <<Menu category id>>
+    --
+    * name : string <<Name of dish>>
+    --
+    parentCategoryId: UUID <<Optional parent category>>
+}
+
+MenuCategory }o-- MenuCategory
+MenuCategory }o-- Dish
+
+@enduml

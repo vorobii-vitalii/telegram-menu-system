@@ -1,0 +1,31 @@
+@startuml
+
+skinparam defaultTextAlignment center
+
+!define SPRITESURL .
+
+!includeurl SPRITESURL/mongodb.puml
+!includeurl SPRITESURL/telegram.puml
+!includeurl SPRITESURL/envoy.puml
+!includeurl SPRITESURL/grpc.puml
+!includeurl SPRITESURL/java.puml
+!includeurl SPRITESURL/react.puml
+
+title Component diagram
+
+rectangle "<$mongodb>" as Mongo
+rectangle "<$telegram> \n\nTelegram API" as Telegram
+rectangle "<$envoy> \n\nEnvoy Proxy" as Envoy
+rectangle "<$java> \n\nTelegram Menu Bot" as MenuTelegramBot
+rectangle "<$grpc> \n\nMenu Management Service" as MenuManagementService
+rectangle "<$react> \n\nAdmin UI" as AdminUI
+
+
+[MenuTelegramBot] --> Telegram : Register new telegram bot
+[Telegram] --> [MenuTelegramBot] : Callbacks on user actions (write new message, click on buttons etc)
+[MenuTelegramBot] --> MenuManagementService : Fetch menu categories and dish details
+Envoy --> MenuManagementService : HTTP to gRPC request mapping
+AdminUI --> Envoy : Dishes and categories CRUD
+MenuManagementService --> Mongo : Fetch and store categories and dish details
+
+@enduml
